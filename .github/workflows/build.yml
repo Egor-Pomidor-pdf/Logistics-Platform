@@ -46,5 +46,6 @@ jobs:
           context: ./${{ matrix.service }}
           push: true
           tags: ${{ env.IMAGE_TAG }}
+          build-args: SERVICE_NAME=${{ matrix.service }}
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service }}
