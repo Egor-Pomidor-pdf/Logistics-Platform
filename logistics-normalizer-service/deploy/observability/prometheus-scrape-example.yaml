@@ -1,0 +1,6 @@
+# Add this to prometheus.yml scrape_configs.
+- job_name: otel-central-collector
+  metrics_path: /metrics
+  static_configs:
+    - targets:
+        - otel-gateway.observability.svc.cluster.local:9464

@@ -1,0 +1,36 @@
+# Binaries
+bin/
+dist/
+*.exe
+*.out
+
+# Go build cache
+*.test
+*.prof
+coverage.out
+coverage.html
+
+# Environment & secrets
+.env
+.env.*
+*.local
+secrets/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Claude AI
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Kubernetes secrets (if generated locally)
+*-secret.yaml

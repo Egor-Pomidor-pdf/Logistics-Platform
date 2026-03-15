@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eta-sla-service
+  namespace: logistics
+  labels:
+    app: eta-sla-service
+spec:
+  replicas: 3
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app: eta-sla-service
+  template:
+    metadata:
+      labels:
+        app: eta-sla-service
+      annotations:
+        # Service pushes OTLP telemetry to node-local otel-agent.
+        instrumentation.opentelemetry.io/inject-go: "false"
+    spec:
+      terminationGracePeriodSeconds: 40
+      containers:
+        - name: eta-sla-service
+          image: ghcr.io/dns/logistics/eta-sla-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8081
+          envFrom:
+            - configMapRef:
+                name: eta-sla-config
+            - secretRef:
+                name: eta-sla-secrets
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 300m
+              memory: 384Mi
+            limits:
+              cpu: "2"
+              memory: 2Gi

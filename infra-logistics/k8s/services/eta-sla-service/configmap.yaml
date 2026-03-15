@@ -1,0 +1,58 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: eta-sla-config
+  namespace: logistics
+  labels:
+    app: eta-sla-service
+data:
+  SERVICE_NAME: eta-sla-service
+  LOG_LEVEL: info
+
+  HTTP_ADDR: ":8081"
+  HTTP_READ_TIMEOUT: 5s
+  HTTP_WRITE_TIMEOUT: 10s
+  HTTP_IDLE_TIMEOUT: 60s
+  SHUTDOWN_TIMEOUT: 20s
+
+  KAFKA_BROKERS: kafka.logistics.svc.cluster.local:9092
+  NORMALIZED_TOPIC: normalized_logistics_events
+  KAFKA_GROUP_ID: eta-sla-service
+  SLA_EVENTS_TOPIC: sla_events
+
+  RABBITMQ_URL: amqp://guest:guest@rabbitmq.logistics.svc.cluster.local:5672/
+  RABBITMQ_EXCHANGE: eta_sla_exchange
+  RABBITMQ_QUEUE: eta_sla_recalc
+  RABBITMQ_ROUTING_KEY: eta_sla.recalc
+  RABBITMQ_DLQ: eta_sla_recalc.dlq
+  RABBITMQ_PREFETCH: "128"
+
+  REDIS_ADDR: redis.logistics.svc.cluster.local:6379
+  REDIS_DB: "0"
+
+  CLICKHOUSE_DSN: clickhouse://clickhouse.logistics.svc.cluster.local:9000/default
+
+  DB_QUERY_TIMEOUT: 3s
+  DB_WRITE_TIMEOUT: 5s
+  DB_CONNECT_TIMEOUT: 3s
+  PG_MAX_CONNS: "100"
+  PG_MIN_CONNS: "20"
+  PG_MAX_CONN_LIFETIME: 30m
+  PG_MAX_CONN_IDLE_TIME: 10m
+  PG_HEALTH_CHECK_PERIOD: 30s
+  ENABLE_AUTO_MIGRATE: "true"
+
+  WORKER_COUNT: "24"
+  SLA_BATCH_SIZE: "256"
+  SLA_BATCH_FLUSH_INTERVAL: 1s
+
+  SLA_EVENTS_BATCH_SIZE: "512"
+  SLA_EVENTS_FLUSH_INTERVAL: 2s
+  SLA_EVENTS_BUFFER: "20000"
+
+  TASK_DEDUP_TTL: 5m
+  FEATURE_TTL: 10m
+  RESULT_TTL: 5m
+
+  OTLP_ENDPOINT: otel-agent.observability.svc.cluster.local:4317
+  OTLP_METRIC_INTERVAL: 10s

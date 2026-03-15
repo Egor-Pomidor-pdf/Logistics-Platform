@@ -1,0 +1,171 @@
+version: "3.9"
+
+x-service-env: &service-env
+  DB_HOST: postgres
+  DB_PORT: "5432"
+  DB_USER: logistics
+  DB_PASSWORD: logistics
+  DB_NAME: logistics
+  KAFKA_BROKER: kafka:9092
+  REDIS_URL: redis://redis:6379/0
+  RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+  CLICKHOUSE_DSN: clickhouse://clickhouse:9000/default
+
+services:
+  zookeeper:
+    image: bitnami/zookeeper:3.9
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: "yes"
+    networks: [logistics-net]
+
+  kafka:
+    image: bitnami/kafka:3.7
+    depends_on: [zookeeper]
+    environment:
+      KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_BROKER_ID: 1
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    ports:
+      - "9092:9092"
+    networks: [logistics-net]
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: logistics
+      POSTGRES_PASSWORD: logistics
+      POSTGRES_DB: logistics
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks: [logistics-net]
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks: [logistics-net]
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks: [logistics-net]
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.8
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+    networks: [logistics-net]
+
+  oms-service:
+    build:
+      context: ../oms-service
+      args: { SERVICE_NAME: oms-service }
+    environment: *service-env
+    networks: [logistics-net]
+
+  wms-integration-service:
+    build:
+      context: ../wms-integration-service
+      args: { SERVICE_NAME: wms-integration-service }
+    environment: *service-env
+    networks: [logistics-net]
+
+  partner-integration-service:
+    build:
+      context: ../partner-integration-service
+      args: { SERVICE_NAME: partner-integration-service }
+    environment: *service-env
+    networks: [logistics-net]
+
+  logistics-normalizer-service:
+    build:
+      context: ../logistics-normalizer-service
+      args: { SERVICE_NAME: logistics-normalizer-service }
+    environment: *service-env
+    networks: [logistics-net]
+
+  shipment-core-service:
+    build:
+      context: ../shipment-core-service
+      args: { SERVICE_NAME: shipment-core-service }
+    environment: *service-env
+    networks: [logistics-net]
+
+  eta-data-service:
+    build:
+      context: ../eta-data-service
+      args: { SERVICE_NAME: eta-data-service }
+    environment:
+      <<: *service-env
+      POSTGRES_DSN: postgres://logistics:logistics@postgres:5432/logistics?sslmode=disable
+      HTTP_ADDR: ":8083"
+      DB_QUERY_TIMEOUT: 3s
+      DB_WRITE_TIMEOUT: 5s
+      DB_CONNECT_TIMEOUT: 3s
+      PG_MAX_CONNS: "40"
+      PG_MIN_CONNS: "5"
+      PG_MAX_CONN_LIFETIME: 30m
+      PG_MAX_CONN_IDLE_TIME: 10m
+      PG_HEALTH_CHECK_PERIOD: 30s
+      ENABLE_AUTO_MIGRATE: "false"
+      REDIS_ADDR: redis:6379
+      REDIS_DB: "0"
+      FEATURE_TTL: 10m
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      RABBITMQ_EXCHANGE: eta_data_exchange
+      RABBITMQ_QUEUE: eta_data_recalc
+      RABBITMQ_ROUTING_KEY: eta_data.recalc
+      RABBITMQ_DLQ: eta_data_recalc.dlq
+      RABBITMQ_PREFETCH: "128"
+      WORKER_COUNT: "8"
+    networks: [logistics-net]
+
+  eta-sla-service:
+    build:
+      context: ../eta-sla-service
+      args: { SERVICE_NAME: eta-sla-service }
+    environment:
+      <<: *service-env
+      POSTGRES_DSN: postgres://logistics:logistics@postgres:5432/logistics?sslmode=disable
+      KAFKA_BROKERS: kafka:9092
+      NORMALIZED_TOPIC: normalized_logistics_events
+      KAFKA_GROUP_ID: eta-sla-service
+      SLA_EVENTS_TOPIC: sla_events
+      REDIS_ADDR: redis:6379
+      REDIS_DB: "0"
+      RABBITMQ_EXCHANGE: eta_sla_exchange
+      RABBITMQ_QUEUE: eta_sla_recalc
+      RABBITMQ_ROUTING_KEY: eta_sla.recalc
+      RABBITMQ_DLQ: eta_sla_recalc.dlq
+      RABBITMQ_PREFETCH: "64"
+      WORKER_COUNT: "8"
+      SLA_BATCH_SIZE: "128"
+      SLA_BATCH_FLUSH_INTERVAL: "1s"
+      SLA_EVENTS_BATCH_SIZE: "256"
+      SLA_EVENTS_FLUSH_INTERVAL: "2s"
+      SLA_EVENTS_BUFFER: "5000"
+    networks: [logistics-net]
+
+  sla-analytics-loader-service:
+    build:
+      context: ../sla-analytics-loader-service
+      args: { SERVICE_NAME: sla-analytics-loader-service }
+    environment: *service-env
+    networks: [logistics-net]
+
+networks:
+  logistics-net:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  clickhouse-data:

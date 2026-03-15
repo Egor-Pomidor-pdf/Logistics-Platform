@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logistics-normalizer-config
+  namespace: logistics
+  labels:
+    app: logistics-normalizer-service
+data:
+  SERVICE_NAME: logistics-normalizer-service
+  LOG_LEVEL: info
+  HTTP_ADDR: ":8081"
+  OTLP_ENDPOINT: otel-agent.observability.svc.cluster.local:4317
+
+  KAFKA_BROKERS: kafka.logistics.svc.cluster.local:9092
+  RAW_TOPIC: raw_logistics_events
+  NORMALIZED_TOPIC: normalized_logistics_events
+  INVALID_TOPIC: logistics_events_invalid
+  KAFKA_GROUP_ID: logistics-normalizer-service
+
+  REDIS_ADDR: redis.logistics.svc.cluster.local:6379
+  REDIS_DB: "0"
+  DEDUP_TTL: 24h
+
+  SHUTDOWN_TIMEOUT: 10s

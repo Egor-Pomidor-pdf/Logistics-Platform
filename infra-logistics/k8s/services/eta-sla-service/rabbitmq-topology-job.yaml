@@ -1,0 +1,56 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: eta-sla-rabbitmq-topology-bootstrap
+  namespace: logistics
+  labels:
+    app: eta-sla-service
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: eta-sla-service
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: rabbit-topology-bootstrap
+          image: rabbitmq:3-management
+          command:
+            - /bin/bash
+            - -ec
+            - |
+              rabbitmqadmin --host "$RABBITMQ_HOST" --port "$RABBITMQ_MANAGEMENT_PORT" --username "$RABBITMQ_USER" --password "$RABBITMQ_PASSWORD" declare exchange name="$RABBITMQ_EXCHANGE" type=direct durable=true
+              rabbitmqadmin --host "$RABBITMQ_HOST" --port "$RABBITMQ_MANAGEMENT_PORT" --username "$RABBITMQ_USER" --password "$RABBITMQ_PASSWORD" declare queue name="$RABBITMQ_DLQ" durable=true
+              rabbitmqadmin --host "$RABBITMQ_HOST" --port "$RABBITMQ_MANAGEMENT_PORT" --username "$RABBITMQ_USER" --password "$RABBITMQ_PASSWORD" declare binding source="$RABBITMQ_EXCHANGE" destination_type=queue destination="$RABBITMQ_DLQ" routing_key="${RABBITMQ_ROUTING_KEY}.dlq"
+              rabbitmqadmin --host "$RABBITMQ_HOST" --port "$RABBITMQ_MANAGEMENT_PORT" --username "$RABBITMQ_USER" --password "$RABBITMQ_PASSWORD" declare queue name="$RABBITMQ_QUEUE" durable=true arguments='{"x-dead-letter-exchange":"'"$RABBITMQ_EXCHANGE"'","x-dead-letter-routing-key":"'"$RABBITMQ_ROUTING_KEY"'.dlq"}'
+              rabbitmqadmin --host "$RABBITMQ_HOST" --port "$RABBITMQ_MANAGEMENT_PORT" --username "$RABBITMQ_USER" --password "$RABBITMQ_PASSWORD" declare binding source="$RABBITMQ_EXCHANGE" destination_type=queue destination="$RABBITMQ_QUEUE" routing_key="$RABBITMQ_ROUTING_KEY"
+          env:
+            - name: RABBITMQ_HOST
+              value: rabbitmq.logistics.svc.cluster.local
+            - name: RABBITMQ_MANAGEMENT_PORT
+              value: "15672"
+            - name: RABBITMQ_USER
+              value: guest
+            - name: RABBITMQ_PASSWORD
+              value: guest
+            - name: RABBITMQ_EXCHANGE
+              valueFrom:
+                configMapKeyRef:
+                  name: eta-sla-config
+                  key: RABBITMQ_EXCHANGE
+            - name: RABBITMQ_QUEUE
+              valueFrom:
+                configMapKeyRef:
+                  name: eta-sla-config
+                  key: RABBITMQ_QUEUE
+            - name: RABBITMQ_ROUTING_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: eta-sla-config
+                  key: RABBITMQ_ROUTING_KEY
+            - name: RABBITMQ_DLQ
+              valueFrom:
+                configMapKeyRef:
+                  name: eta-sla-config
+                  key: RABBITMQ_DLQ

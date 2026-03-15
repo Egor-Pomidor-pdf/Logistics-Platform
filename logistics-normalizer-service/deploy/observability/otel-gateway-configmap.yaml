@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-gateway-config
+  namespace: observability
+data:
+  otel-gateway-config.yaml: |
+    receivers:
+      # Receives telemetry from otel-agent DaemonSet.
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+
+    processors:
+      batch: {}
+
+    exporters:
+      # Prometheus endpoint that will be scraped by Prometheus server.
+      prometheus:
+        endpoint: 0.0.0.0:9464
+        metric_expiration: 180m
+      # Optional exporter for trace debugging.
+      logging:
+        verbosity: normal
+
+    service:
+      pipelines:
+        metrics:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [prometheus]
+        # Minimal trace pipeline for debugging. Replace with Jaeger/Tempo in production.
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [logging]

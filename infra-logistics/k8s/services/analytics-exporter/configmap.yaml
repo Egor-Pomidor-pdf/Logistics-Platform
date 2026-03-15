@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: analytics-exporter-config
+  namespace: logistics
+  labels:
+    app: analytics-exporter
+data:
+  SERVICE_NAME: analytics-exporter
+  LOG_LEVEL: info
+  HTTP_ADDR: ":8090"
+  OTLP_ENDPOINT: otel-agent.observability.svc.cluster.local:4317
+
+  CLICKHOUSE_URL: http://clickhouse.logistics.svc.cluster.local:8123
+  CLICKHOUSE_DATABASE: default
+  CLICKHOUSE_TIMEOUT: 5s
+  CLICKHOUSE_HISTORY_TABLE: shipment_history
+  CLICKHOUSE_STATE_TABLE: shipment_state
+
+  EXPORT_INTERVAL: 1m
+  EXPORT_LAG: 1m
+  EXPORT_BATCH_SIZE: "5000"
+  EXPORT_BACKFILL_WINDOW: 720h
+  EXPORT_HISTORY: "true"
+  EXPORT_STATE: "true"
+
+  DB_QUERY_TIMEOUT: 5s
+  DB_CONNECT_TIMEOUT: 3s
+  PG_MAX_CONNS: "20"
+  PG_MIN_CONNS: "2"
+  PG_MAX_CONN_LIFETIME: 30m
+  PG_MAX_CONN_IDLE_TIME: 10m
+  ENABLE_AUTO_MIGRATE: "true"

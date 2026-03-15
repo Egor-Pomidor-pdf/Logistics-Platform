@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shipment-core-service
+  namespace: logistics
+  labels:
+    app: shipment-core-service
+spec:
+  replicas: 3
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app: shipment-core-service
+  template:
+    metadata:
+      labels:
+        app: shipment-core-service
+      annotations:
+        # OTEL data is pushed via OTLP to node-local agent.
+        instrumentation.opentelemetry.io/inject-go: "false"
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: shipment-core-service
+          image: ghcr.io/dns/logistics/shipment-core-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: grpc
+              containerPort: 9090
+          envFrom:
+            - configMapRef:
+                name: shipment-core-config
+            - secretRef:
+                name: shipment-core-secrets
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: "2"
+              memory: 1Gi

@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: eta-sla-kafka-topics-bootstrap
+  namespace: logistics
+  labels:
+    app: eta-sla-service
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: eta-sla-service
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: kafka-topics-bootstrap
+          image: bitnami/kafka:3.7
+          command:
+            - /bin/bash
+            - -ec
+            - |
+              kafka-topics.sh --bootstrap-server "$KAFKA_BROKERS" --create --if-not-exists --topic "$NORMALIZED_TOPIC" --partitions 24 --replication-factor 1
+              kafka-topics.sh --bootstrap-server "$KAFKA_BROKERS" --create --if-not-exists --topic "$SLA_EVENTS_TOPIC" --partitions 24 --replication-factor 1
+          env:
+            - name: KAFKA_BROKERS
+              valueFrom:
+                configMapKeyRef:
+                  name: eta-sla-config
+                  key: KAFKA_BROKERS
+            - name: NORMALIZED_TOPIC
+              valueFrom:
+                configMapKeyRef:
+                  name: eta-sla-config
+                  key: NORMALIZED_TOPIC
+            - name: SLA_EVENTS_TOPIC
+              valueFrom:
+                configMapKeyRef:
+                  name: eta-sla-config
+                  key: SLA_EVENTS_TOPIC
