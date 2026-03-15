@@ -84,7 +84,7 @@ func NewKafkaHandler(
 // ProcessMessage handles one Kafka raw message.
 func (h *KafkaHandler) ProcessMessage(ctx context.Context, msg kafka.Message) error {
 	started := time.Now()
-	defer h.metrics.ObserveKafkaHandlerDuration(time.Since(started))
+	defer func() { h.metrics.ObserveKafkaHandlerDuration(time.Since(started)) }()
 
 	h.updateConsumerLag(msg)
 

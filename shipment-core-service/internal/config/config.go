@@ -73,8 +73,8 @@ type envCfg struct {
 	ServiceName string `envconfig:"SERVICE_NAME" default:"shipment-core-service"`
 	LogLevel    string `envconfig:"LOG_LEVEL" default:"info"`
 
-	HTTPAddr     string `envconfig:"HTTP_ADDR" default":8080"`
-	GRPCAddr     string `envconfig:"GRPC_ADDR" default":9090"`
+	HTTPAddr     string `envconfig:"HTTP_ADDR" default:":8080"`
+	GRPCAddr     string `envconfig:"GRPC_ADDR" default:":9090"`
 	ReadTimeout  string `envconfig:"HTTP_READ_TIMEOUT" default:"5s"`
 	WriteTimeout string `envconfig:"HTTP_WRITE_TIMEOUT" default:"10s"`
 	IdleTimeout  string `envconfig:"HTTP_IDLE_TIMEOUT" default:"60s"`

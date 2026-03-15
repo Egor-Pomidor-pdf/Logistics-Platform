@@ -82,7 +82,7 @@ func (h *HTTPHandler) handleHealth(w http.ResponseWriter, r *http.Request) {
 func (h *HTTPHandler) handleIngestEvent(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	started := time.Now()
-	defer h.metrics.ObserveKafkaHandlerDuration(time.Since(started))
+	defer func() { h.metrics.ObserveKafkaHandlerDuration(time.Since(started)) }()
 
 	body, err := io.ReadAll(io.LimitReader(r.Body, maxBodySize))
 	if err != nil {

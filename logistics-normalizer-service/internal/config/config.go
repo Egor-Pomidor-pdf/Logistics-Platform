@@ -48,7 +48,7 @@ type envCfg struct {
 	OTLPEndpoint    string `envconfig:"OTLP_ENDPOINT"`
 	LegacyOTLP      string `envconfig:"OTEL_EXPORTER_OTLP_ENDPOINT"`
 	HTTPAddr        string `envconfig:"HTTP_ADDR" default:":8081"`
-	MetricsAddr     string `envconfig:"METRICS_ADDR" default":2112"`
+	MetricsAddr     string `envconfig:"METRICS_ADDR" default:":2112"`
 	RedisDedupTTL   string `envconfig:"REDIS_DEDUP_TTL" default:"24h"`
 }
 
