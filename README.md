@@ -76,6 +76,23 @@
 
 ---
 
+## CI/CD
+
+При каждом пуше в `main` GitHub Actions собирает Docker-образы всех четырёх сервисов
+и публикует их в GitHub Container Registry (`ghcr.io`).
+Образы доступны для деплоя в любой Kubernetes-кластер без дополнительной настройки registry.
+
+Конфигурация: [`.github/workflows/build.yml`](.github/workflows/build.yml)
+
+---
+
+## Локальный запуск
+
+Инфраструктура (PostgreSQL, Kafka, Redis, RabbitMQ, ClickHouse) поднимается через Docker Compose,
+сервисы запускаются локально или в Minikube. Доступные команды описаны в [`Makefile`](Makefile).
+
+---
+
 ## Инфраструктурные зависимости
 
 - **PostgreSQL** — основное хранилище событий и состояний
